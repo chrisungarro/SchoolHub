@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Build outputs
+client/dist/
+dist/
+
+# SQLite database & WAL files
+server/school.db
+server/school.db-shm
+server/school.db-wal
+
+# Environment & logs
+.env
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
