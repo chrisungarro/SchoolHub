@@ -132,8 +132,43 @@ export const ScoreEntryView: React.FC = () => {
     }
   };
 
-  const handleExportExcel = () => {
-    window.location.href = `/api/scores/export-excel?class_id=${selectedClassId}&arm=${selectedArm}&subject_id=${selectedSubjectId}&term_id=${selectedTermId}&session_id=${selectedSessionId}`;
+  const handleExportExcel = async () => {
+    const url = `/api/scores/export-excel?class_id=${selectedClassId}&arm=${selectedArm}&subject_id=${selectedSubjectId}&term_id=${selectedTermId}&session_id=${selectedSessionId}`;
+    try {
+      const res = await fetch(url);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('spreadsheetml')) {
+        const blob = await res.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${selectedClass?.name || 'Class'}_${selectedSubject?.code || 'Subject'}_Scores.xlsx`.replace(/\s+/g, '_');
+        link.click();
+        return;
+      }
+    } catch {}
+
+    // Client-side CSV fallback for static deployments (Vercel)
+    const headers = ['Student ID', 'Admission No', 'Student Name', 'Arm', 'Assignment (Max 10)', 'Test (Max 20)', 'Exam (Max 70)', 'Total (Max 100)', 'Grade', 'Remark'];
+    const csvRows = [
+      headers.join(','),
+      ...scoreRows.map(r => [
+        `"${r.student_code}"`,
+        `"${r.admission_no}"`,
+        `"${r.student_name}"`,
+        `"${r.arm}"`,
+        r.assignment_score,
+        r.test_score,
+        r.exam_score,
+        r.total_score,
+        `"${r.grade}"`,
+        `"${r.remark}"`
+      ].join(','))
+    ];
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${selectedClass?.name || 'Class'}_${selectedSubject?.code || 'Subject'}_Scores.csv`.replace(/\s+/g, '_');
+    link.click();
   };
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
